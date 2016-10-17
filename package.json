@@ -1,4 +1,12 @@
 {
   "name": "ai-home-center",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "byline": "^5.0.0",
+    "mac-lookup": "^0.1.7",
+    "ping": "^0.2.0",
+    "q": "^1.4.1",
+    "ssh2": "^0.5.2",
+    "through2": "^2.0.1"
+  }
 }
