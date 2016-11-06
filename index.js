@@ -1,26 +1,16 @@
-var Koa = require('koa');
 process.chdir(__dirname);
 
+const Koa = require('koa');
+const KoaStatic = require('koa-static');
+const KoaLogger = require('koa-logger');
+const KoaResponseTime = require('koa-response-time');
 
-var app = Koa();
+const app = Koa();
 
-// x-response-time
-app.use(function *(next) {
-    var start = new Date;
-    yield next;
-    var ms = new Date - start;
-    this.set('X-Response-Time', ms + 'ms');
-});
-
-// logger
-app.use(function *(next) {
-    var start = new Date;
-    yield next;
-    var ms = new Date - start;
-    console.log('%s %s - %ss', this.method, this.url, ms / 1000);
-});
-
-// response
+app.use(KoaLogger());
+app.use(KoaResponseTime());
 app.use(require('./src/router').routes());
+app.use(KoaStatic('web'));
 
-app.listen(3000);
+
+app.listen(8000);
