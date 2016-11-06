@@ -7,7 +7,7 @@ var through2 = require('through2');
 var byline = require('byline');
 var mac_lookup = require('mac-lookup');
 var ping = require('ping');
-var config = require('../../config/config');
+var config = require('../../../config/config');
 
 module.exports = {
     'query': function () {

@@ -1,16 +1,11 @@
-var koa = require('koa');
-var app = koa();
-var Q = require('q');
-
-var ArpService = require('./src/arp/index');
-
+var Koa = require('koa');
 process.chdir(__dirname);
 
+
+var app = Koa();
+
 // x-response-time
-
 app.use(function *(next) {
-    next.arr = [1];
-
     var start = new Date;
     yield next;
     var ms = new Date - start;
@@ -18,26 +13,14 @@ app.use(function *(next) {
 });
 
 // logger
-
 app.use(function *(next) {
-    console.log(next);
-
     var start = new Date;
     yield next;
     var ms = new Date - start;
-    console.log('%s %s - %s', this.method, this.url, ms);
+    console.log('%s %s - %ss', this.method, this.url, ms / 1000);
 });
 
 // response
-
-app.use(function *(next) {
-
-
-    var self = this;
-
-    yield ArpService.query().then(function (data) {
-        self.body = JSON.stringify(data);
-    });
-});
+app.use(require('./src/router').routes());
 
 app.listen(3000);

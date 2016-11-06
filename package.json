@@ -4,6 +4,7 @@
   "dependencies": {
     "byline": "^5.0.0",
     "koa": "^1.2.4",
+    "koa-router": "^5.4.0",
     "mac-lookup": "^0.1.7",
     "ping": "^0.2.0",
     "q": "^1.4.1",
