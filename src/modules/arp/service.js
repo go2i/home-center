@@ -1,20 +1,35 @@
 "use strict";
 
-var SSH2Client = require('ssh2').Client;
-var Q = require('q');
-var util = require('util');
-var through2 = require('through2');
-var byline = require('byline');
-var mac_lookup = require('mac-lookup');
-var ping = require('ping');
-var config = require('../../../config/config');
+const SSH2Client = require('ssh2').Client;
+const Q = require('q');
+const util = require('util');
+const through2 = require('through2');
+const byline = require('byline');
+const mac_lookup = require('mac-lookup');
+const ping = require('ping');
+const config = require('../../../config/config');
+const $di = require('../../models/$di');
+
+
+let cache = null;
 
 module.exports = {
+    'init': function*() {
+        cache = yield this.query();
+
+        let int = setInterval(() => {
+            this.query().then((data) => cache = data).done();
+        }, 60000);
+
+        $di.addCloseHandlers(function *() {
+            clearImmediate(int);
+        }());
+    },
     'query': function () {
-        var conn = new SSH2Client();
+        let conn = new SSH2Client();
 
         return Q().then(function () {
-            var deferred = Q.defer();
+            let deferred = Q.defer();
 
             conn.on('ready', function () {
                 deferred.resolve(conn);
@@ -35,18 +50,18 @@ module.exports = {
                 return stream;
             })
         }).then(function (stream) {
-            var deferred = Q.defer();
+            let deferred = Q.defer();
 
-            var rs = [];
+            let rs = [];
 
             byline(stream.stdout).pipe(through2.obj(function (chunk, enc, callback) {
-                var arr = chunk.toString().split(' ');
+                let arr = chunk.toString().split(' ');
 
-                var server_name = arr[0] === '?' ? null : arr[0];
-                var ip = arr[1].substr(1, arr[1].length - 2);
-                var mac_addr = arr[3] === '<incomplete>' ? null : arr[3];
+                let server_name = arr[0] === '?' ? null : arr[0];
+                let ip = arr[1].substr(1, arr[1].length - 2);
+                let mac_addr = arr[3] === '<incomplete>' ? null : arr[3];
 
-                var out_obj = {
+                let out_obj = {
                     'server_name': server_name,
                     'ip': ip,
                     'mac': mac_addr
@@ -55,7 +70,7 @@ module.exports = {
                 this.push(out_obj);
                 callback();
             })).pipe(through2.obj(function (arp_detail, enc, callback) {
-                var self = this;
+                let self = this;
 
                 if (arp_detail.mac === null) {
                     self.push(arp_detail);
@@ -70,7 +85,7 @@ module.exports = {
                     callback();
                 });
             })).pipe(through2.obj(function (arp_detail, enc, callback) {
-                var self = this;
+                let self = this;
 
                 Q(ping.promise.probe(arp_detail.ip)).then(function (isAlive) {
                     arp_detail.is_alive = isAlive.alive;
@@ -89,5 +104,8 @@ module.exports = {
 
             return deferred.promise;
         });
+    },
+    'queryWithCache': function () {
+        return cache;
     }
 };
